@@ -13,24 +13,24 @@ The repository test workflow currently uses:
 * Python 3.14
 * PyQt6 6.11.0
 * PyQt6-Qt6 6.11.2
-* pytest from requirements-dev.txt
+* pytest from [requirements-dev.txt](https://github.com/StoneVeld-Studios/RAG_Trigger_Studio/blob/main/requirements-dev.txt)
 
 GitHub-hosted runners are fresh virtual machines for each job. System packages required by the application therefore have to be installed by the workflow itself rather than assumed to exist on the runner.
 
 ## 2. Python dependencies
 
 From the repository root:
-
+```Yaml
 python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install -r requirements.txt
 python -m pip install -r requirements-dev.txt
+```
+[requirements.txt](https://github.com/StoneVeld-Studios/RAG_Trigger_Studio/blob/main/requirements.txt) contains the application/runtime Python dependencies, including the pinned PyQt6 packages.
 
-requirements.txt contains the application/runtime Python dependencies, including the pinned PyQt6 packages.
+[requirements-dev.txt](https://github.com/StoneVeld-Studios/RAG_Trigger_Studio/blob/main/requirements-dev.txt) contains the test-only Python dependencies.
 
-requirements-dev.txt contains the test-only Python dependencies.
-
-Do not install only requirements.txt when you intend to run the test suite; pytest is intentionally kept in the development/test dependency file.
+Do not install [requirements.txt] when you intend to run the test suite; pytest is intentionally kept in the development/test dependency file.
 
 ## 3. Linux Qt runtime dependency
 
@@ -38,78 +38,74 @@ PyQt6 is a Python package, but the Qt GUI stack also requires operating-system l
 
 For Debian/Ubuntu systems, install the EGL runtime library:
 
-sudo apt-get update
-sudo apt-get install -y libegl1
+`sudo apt-get update`
+
+`sudo apt-get install -y libegl1`
 
 The GitHub Actions workflow performs the same installation before importing the PyQt6 application.
 
-This package is not placed in requirements.txt because pip requirements describe Python packages, while libegl1 is an Ubuntu/Debian operating-system package.
+This package is not placed in [requirements.txt](https://github.com/StoneVeld-Studios/RAG_Trigger_Studio/blob/main/requirements.txt) because pip requirements describe Python packages, while 
+>`libegl1`
 
-Other Linux distributions may provide the same EGL runtime through a differently named system package. Use the distribution's Qt/OpenGL runtime package mechanism when the package name differs.
+is an Ubuntu/Debian operating-system package.
 
-## 4. Running the application
+Use the distribution's Qt/OpenGL runtime package mechanism.
 
-From the repository root with the virtual environment active:
+>https://doc.qt.io/qt-6/qtopengl-index.html#using-the-module
+>
+>https://doc.qt.io/qt-6/cmake-get-started.html
 
-python3 main_ui.py
-
-The application is a PyQt6 desktop application.
-
-## 5. Stage 1 repository test
+## 4. Stage 1 repository test
 
 The deterministic repository test does not require Ollama, a model, an API key, or a GPU.
 
 Run from the repository root:
 
-python -m pytest -q
+`python -m pytest -q`
 
 Use the repository root as the working directory. Do not run the command from inside tests/, because the project imports its top-level lib/ package.
 
 The Qt integration test configures Qt for an offscreen test environment, so the deterministic suite does not require a physical desktop display on CI.
 
+## 5. Running the application
+
+From the repository root with the virtual environment active:
+
+`python3 main_ui.py`
+
+The application is a PyQt6 desktop application.
+
 ## 6. Stage 2 real Ollama test
 
 Install Ollama separately and make sure the selected model is available.
 
-The default test configuration is:
+>https://ollama.com/download/linux
 
-* Host: http://127.0.0.1:11434
-* Model: qwen2.5-coder:3b
+>https://docs.ollama.com/
 
-Run the explicit integration test from the repository root:
-
-RAG_RUN_LOCAL_CORE=1 python -m pytest -q tests/test_local_core.py
-
-This test is intentionally not part of the default GitHub CI run because GitHub's hosted runner does not contain the developer's local Ollama service or model.
-
-## 7. Test evidence
+## 7. Test evidence for review.
 
 Keep the two evidence classes separate:
 
 * **Stage 1 / CI evidence:** repository code, deterministic Core behaviour, protocol handling, and application tests.
 * **Stage 2 / local evidence:** communication with the specific Ollama installation and model available on the tester's machine.
 
-A successful Stage 1 test does not prove that a particular local AI engine is installed or reachable.
-
-A successful Stage 2 test does not replace the deterministic repository suite.
-
 ## 8. Troubleshooting
 
 ### ModuleNotFoundError: No module named 'lib'
 
-Check that:
-
-1. the virtual environment is active;
-2. the repository dependencies are installed;
-3. the command is being run from the repository root; and
-4. the command is python -m pytest ...
+>Check that:
+>1. the virtual environment is active;
+>2. the repository dependencies are installed;
+>3. the command is being run from the repository root; and
+>4. the command is python -m pytest ...
 
 ### ImportError: libEGL.so.1: cannot open shared object file
 
 On Debian/Ubuntu, install the EGL runtime package:
 
-sudo apt-get update
-sudo apt-get install -y libegl1
+`sudo apt-get update
+sudo apt-get install -y libegl1`
 
 Then rerun the test from the repository root.
 
@@ -118,9 +114,10 @@ Then rerun the test from the repository root.
 The Stage 2 test is intentionally opt-in. Set RAG_RUN_LOCAL_CORE=1 when you want to perform the real local Core test.
 
 ## 9. Files involved in the test environment
-
+```
 * requirements.txt — application Python dependencies.
 * requirements-dev.txt — test/development Python dependencies.
 * .github/workflows/tests.yml — reproducible GitHub-hosted CI environment and test commands.
 * CORE_TESTING.md — Core validation boundary and evidence model.
 * tests/ — deterministic and optional integration tests.
+```
